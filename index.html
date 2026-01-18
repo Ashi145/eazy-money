@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eazy Money 🤑</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --primary: #00d2ff;
+            --success: #00ff88;
+            --warning: #f1c40f;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
+        .logo span { color: var(--primary); }
+
+        .balance-card { text-align: center; position: relative; overflow: hidden; }
+        .balance-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: rotate 10s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .balance-label { font-size: 0.9rem; color: var(--text-muted); letter-spacing: 1px; }
+        .balance-amount { font-size: 3rem; font-weight: 700; margin: 10px 0; color: var(--success); }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%; background: rgba(0,0,0,0.3); border-radius: 10px; height: 10px; margin-top: 10px; overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%; background: var(--primary); width: 0%; transition: width 0.5s ease;
+        }
+        .limit-text { font-size: 0.8rem; margin-top: 5px; color: var(--text-muted); text-align: right;}
+
+        /* Video List */
+        .video-grid {
+            display: grid;
+            gap: 15px;
+        }
+        .video-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .video-thumb {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            cursor: pointer;
+            position: relative;
+        }
+        .play-icon {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 3rem; color: white; opacity: 0.8; text-shadow: 0 2px 10px black;
+        }
+        .video-info { padding: 10px; }
+        .video-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+        .reward-tag { font-size: 0.8rem; color: var(--success); }
+
+        /* Player Modal */
+        .player-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .player-wrapper {
+            width: 100%; max-width: 600px; aspect-ratio: 16/9; background: black;
+        }
+        .player-status {
+            margin-top: 20px; text-align: center;
+        }
+        .close-btn {
+            margin-top: 20px; padding: 10px 30px; background: var(--primary); border: none;
+            border-radius: 50px; font-weight: bold; cursor: pointer; color: #000;
+        }
+
+        /* Other UI Elements (Keeping simple for brevity) */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; cursor: pointer;}
+        .nav-btn.active { background: var(--primary); color: black; }
+        
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .form-input { width: 100%; padding: 12px; margin: 10px 0; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 8px; }
+        .action-btn { width: 100%; padding: 15px; background: var(--success); border: none; font-weight: bold; color: #004d2a; border-radius: 8px; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">Eazy <span>Money</span> 🤑</div>
+        <div style="background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--primary);">
+            <span id="header-points">0</span> pts
+        </div>
+    </header>
+
+    <!-- Balance -->
+    <div class="card balance-card">
+        <div class="balance-label">TOTAL BALANCE</div>
+        <div class="balance-amount">$<span id="balance-display">0.00</span></div>
+        
+        <!-- Daily Progress -->
+        <div style="text-align: left; margin-top: 20px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Daily Task Progress</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="limit-text"><span id="watched-count">0</span>/5 Videos today</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+        <button class="nav-btn active" onclick="switchTab('tasks')">Tasks</button>
+        <button class="nav-btn" onclick="switchTab('refer')">Refer</button>
+        <button class="nav-btn" onclick="switchTab('withdraw')">Withdraw</button>
+    </nav>
+
+    <!-- TASKS SECTION (Auto-Fetched) -->
+    <div id="tasks" class="section active">
+        <div class="card">
+            <div id="video-container" class="video-grid">
+                <!-- Videos injected via JS -->
+                <div style="text-align:center; padding: 20px;">Loading Videos...</div>
+            </div>
+            <div id="limit-msg" style="display:none; text-align:center; padding: 30px; color: var(--warning);">
+                🚫 Daily limit reached! Come back tomorrow.
+            </div>
+        </div>
+    </div>
+
+    <!-- WITHDRAW SECTION -->
+    <div id="withdraw" class="section">
+        <div class="card">
+            <h3>Cashout to MoMo</h3>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">Minimum: 100 pts ($10.00)</p>
+            <input type="text" id="momo-name" class="form-input" placeholder="Full Name">
+            <input type="tel" id="momo-number" class="form-input" placeholder="MoMo Number">
+            <button onclick="handleWithdraw()" class="action-btn" id="withdraw-btn" disabled>WITHDRAW</button>
+        </div>
+    </div>
+
+    <!-- REFER SECTION -->
+    <div id="refer" class="section">
+        <div class="card" style="text-align: center;">
+            <h3>Invite Friends</h3>
+            <p>Share your link. Earn 6 points.</p>
+            <div onclick="copyLink()" style="background: rgba(0,0,0,0.3); padding: 10px; margin-top: 10px; border-radius: 8px; cursor: pointer;">
+                https://eazymoney.com/ref/<span id="ref-link">...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIDEO PLAYER MODAL -->
+<div class="player-modal" id="player-modal">
+    <div class="player-wrapper">
+        <div id="player"></div>
+    </div>
+    <div class="player-status">
+        <h3 id="player-title">Watching...</h3>
+        <p style="color: var(--text-muted);">Please watch 80% to earn points.</p>
+        <div id="watch-progress" style="color: var(--primary); margin-top: 5px;">0% Watched</div>
+        <button class="close-btn" onclick="closePlayer()">Close (No Points)</button>
+    </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    // --- CONFIG ---
+    const API_URL = 'http://127.0.0.1:5000/api';
+    let userId = localStorage.getItem('eazyUserId') || 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('eazyUserId', userId);
+    document.getElementById('ref-link').innerText = userId;
+
+    let player; // YouTube Player Instance
+    let currentVideoId = null;
+    let isTracking = false;
+
+    // --- INIT ---
+    async function init() {
+        await refreshData();
+        await loadVideos();
+    }
+
+    async function refreshData() {
+        const res = await fetch(`${API_URL}/user_data?user_id=${userId}`);
+        const data = await res.json();
+        
+        document.getElementById('header-points').innerText = data.points;
+        document.getElementById('balance-display').innerText = (data.points * 0.10).toFixed(2);
+        document.getElementById('watched-count').innerText = data.watched_today;
+        
+        const percent = (data.watched_today / 5) * 100;
+        document.getElementById('progress-bar').style.width = percent + '%';
+        
+        const btn = document.getElementById('withdraw-btn');
+        if(data.points >= 100) {
+            btn.disabled = false;
+            btn.innerText = "WITHDRAW $" + (data.points * 0.10).toFixed(2);
+        } else {
+            btn.disabled = true;
+            btn.innerText = "NEED 100 POINTS";
+        }
+    }
+
+    async function loadVideos() {
+        const res = await fetch(`${API_URL}/videos?user_id=${userId}`);
+        const data = await res.json();
+        const container = document.getElementById('video-container');
+        const limitMsg = document.getElementById('limit-msg');
+        
+        container.innerHTML = '';
+        
+        if (data.message) {
+            limitMsg.style.display = 'block';
+            return;
+        }
+        
+        limitMsg.style.display = 'none';
+
+        data.videos.forEach(vid => {
+            const div = document.createElement('div');
+            div.className = 'video-card';
+            div.innerHTML = `
+                <div class="video-thumb" onclick="openPlayer('${vid.id}', '${vid.title.replace(/'/g, "\\'")}')">
+                    <img src="${vid.thumbnail}" style="width:100%; height:100%; object-fit:cover;">
+                    <div class="play-icon">▶</div>
+                </div>
+                <div class="video-info">
+                    <div class="video-title">${vid.title}</div>
+                    <div class="reward-tag">+4 Points</div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // --- YOUTUBE PLAYER LOGIC ---
+    function openPlayer(videoId, title) {
+        currentVideoId = videoId;
+        isTracking = true;
+        document.getElementById('player-modal').style.display = 'flex';
+        document.getElementById('player-title').innerText = title;
+        document.getElementById('watch-progress').innerText = "0% Watched";
+        
+        if (player) {
+            player.loadVideoById(videoId);
+        } else {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.PLAYING) {
+            startTracking();
+        }
+    }
+
+    let trackingInterval;
+    function startTracking() {
+        if (trackingInterval) clearInterval(trackingInterval);
+        
+        trackingInterval = setInterval(() => {
+            if (!player || !player.getDuration) return;
+            
+            const currentTime = player.getCurrentTime();
+            const duration = player.getDuration();
+            const percent = (currentTime / duration) * 100;
+            
+            document.getElementById('watch-progress').innerText = Math.round(percent) + "% Watched";
+
+            // Requirement: Watch 80%
+            if (percent >= 80 && isTracking) {
+                isTracking = false;
+                clearInterval(trackingInterval);
+                player.pauseVideo();
+                completeTask();
+            }
+        }, 1000);
+    }
+
+    async function completeTask() {
+        document.getElementById('watch-progress').innerText = "Verifying...";
+        document.getElementById('watch-progress').style.color = "var(--success)";
+        
+        const res = await fetch(`${API_URL}/earn_video`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, video_id: currentVideoId })
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+            alert("✅ Task Complete! " + result.message);
+            closePlayer();
+            refreshData();
+            loadVideos(); // Reload to remove completed video
+        } else {
+            alert("❌ Error: " + result.message);
+            closePlayer();
+        }
+    }
+
+    function closePlayer() {
+        if (player) player.stopVideo();
+        document.getElementById('player-modal').style.display = 'none';
+        clearInterval(trackingInterval);
+        isTracking = false;
+    }
+
+    // --- UTILS ---
+    function switchTab(tab) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tab).classList.add('active');
+        // simple active state logic
+        if(tab==='tasks') document.querySelectorAll('.nav-btn')[0].classList.add('active');
+        if(tab==='refer') document.querySelectorAll('.nav-btn')[1].classList.add('active');
+        if(tab==='withdraw') document.querySelectorAll('.nav-btn')[2].classList.add('active');
+    }
+
+    async function handleWithdraw() {
+        const name = document.getElementById('momo-name').value;
+        const num = document.getElementById('momo-number').value;
+        if(!name || !num) return alert("Fill all fields");
+
+        const res = await fetch(`${API_URL}/withdraw`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, momo_name: name, momo_number: num })
+        });
+        const result = await res.json();
+        if(result.success) {
+            alert("Withdrawal Request Sent!");
+            refreshData();
+        } else {
+            alert(result.message);
+        }
+    }
+
+    function copyLink() {
+        navigator.clipboard.writeText("https://eazymoney.com/ref/" + userId);
+        alert("Link Copied!");
+    }
+
+    init();
+</script>
+</body>
+</html>
