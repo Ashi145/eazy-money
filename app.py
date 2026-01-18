@@ -9,7 +9,7 @@ CORS(app)
 
 # --- CONFIGURATION ---
 # PASTE YOUR YOUTUBE DATA API KEY HERE
-YOUTUBE_API_KEY = 'AIzaSyAsW-5rxfwxXbSD1SJ5xbX2jiQGjgWRw04' 
+YOUTUBE_API_KEY = 'AIzaSyCxBY4BWtPZJ71ZJnLfbsOE_UplRcVsUio' 
 CHANNEL_ID = 'UCm8g3HVApSWOLrXm-Pa8thw'
 DAILY_VIDEO_LIMIT = 5
 
@@ -175,4 +175,5 @@ def withdraw():
 
 if __name__ == '__main__':
     print("Server running on http://127.0.0.1:5000")
+
     app.run(debug=True, port=5000)
